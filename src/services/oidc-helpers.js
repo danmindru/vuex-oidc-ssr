@@ -37,6 +37,18 @@ const snakeCasedSettings = (oidcSettings) => {
   return oidcSettings
 }
 
+const getSessionStorage = () => {
+  if (process.browser) {
+    return window.sessionStorage
+  }
+
+  return {
+    getItem () {},
+    setItem () {},
+    removeItem () {}
+  }
+}
+
 export const getOidcConfig = (oidcSettings) => {
   return objectAssign([
     defaultOidcConfig,
@@ -87,7 +99,7 @@ export const processSignInCallback = (oidcSettings) => {
     const oidcUserManager = createOidcUserManager(oidcSettings)
     oidcUserManager.signinRedirectCallback()
       .then(user => {
-        resolve(sessionStorage.getItem('vuex_oidc_active_route') || '/')
+        resolve(getSessionStorage().getItem('vuex_oidc_active_route') || '/')
       })
       .catch(err => {
         reject(err)

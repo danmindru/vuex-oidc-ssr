@@ -3,6 +3,18 @@ import { getOidcConfig, getOidcCallbackPath, createOidcUserManager, addUserManag
 import { dispatchCustomBrowserEvent } from '../services/browser-event'
 import { openUrlWithIframe } from '../services/navigation'
 
+const getSessionStorage = () => {
+  if (process.browser) {
+    return window.sessionStorage
+  }
+
+  return {
+    getItem () {},
+    setItem () {},
+    removeItem () {}
+  }
+}
+
 export default (oidcSettings, storeSettings = {}, oidcEventListeners = {}) => {
   const oidcConfig = getOidcConfig(oidcSettings)
   const oidcUserManager = createOidcUserManager(oidcSettings)
@@ -236,9 +248,9 @@ export default (oidcSettings, storeSettings = {}, oidcEventListeners = {}) => {
         payload = { redirectPath: payload }
       }
       if (payload.redirectPath) {
-        sessionStorage.setItem('vuex_oidc_active_route', payload.redirectPath)
+        getSessionStorage().setItem('vuex_oidc_active_route', payload.redirectPath)
       } else {
-        sessionStorage.removeItem('vuex_oidc_active_route')
+        getSessionStorage().removeItem('vuex_oidc_active_route')
       }
       // Take options for signinRedirect from 1) payload or 2) storeSettings if defined there
       const options = payload.options || storeSettings.defaultSigninRedirectOptions || {}
@@ -251,7 +263,7 @@ export default (oidcSettings, storeSettings = {}, oidcEventListeners = {}) => {
         oidcUserManager.signinRedirectCallback(url)
           .then(user => {
             context.dispatch('oidcWasAuthenticated', user)
-            resolve(sessionStorage.getItem('vuex_oidc_active_route') || '/')
+            resolve(getSessionStorage().getItem('vuex_oidc_active_route') || '/')
           })
           .catch(err => {
             context.commit('setOidcError', errorPayload('oidcSignInCallback', err))
